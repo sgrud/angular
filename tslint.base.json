@@ -1,0 +1,62 @@
+{
+  "extends": "./tslint.json",
+  "rules": {
+    "arrow-parens": true,
+    "forin": false,
+    "max-line-length": [
+      true,
+      {
+        "limit": 80,
+        "ignore-pattern": "^(export|import)"
+      }
+    ],
+    "member-access": [
+      true,
+      "check-accessor",
+      "check-constructor",
+      "check-parameter-property"
+    ],
+    "member-ordering": [
+      true,
+      {
+        "order": [
+          "public-static-field",
+          "protected-static-field",
+          "private-static-field",
+          "public-static-accessor",
+          "protected-static-accessor",
+          "private-static-accessor",
+          "public-static-method",
+          "protected-static-method",
+          "private-static-method",
+          "public-instance-field",
+          "protected-instance-field",
+          "private-instance-field",
+          "public-instance-accessor",
+          "protected-instance-accessor",
+          "private-instance-accessor",
+          "public-constructor",
+          "protected-constructor",
+          "private-constructor",
+          "public-instance-method",
+          "protected-instance-method",
+          "private-instance-method"
+        ]
+      }
+    ],
+    "no-any": false,
+    "no-conditional-assignment": false,
+    "no-consecutive-blank-lines": true,
+    "no-inferrable-types": false,
+    "no-non-null-assertion": false,
+    "ordered-imports": true,
+    "semicolon": true,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": "never",
+        "singleline": "never"
+      }
+    ]
+  }
+}
