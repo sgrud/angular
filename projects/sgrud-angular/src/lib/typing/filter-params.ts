@@ -1,10 +1,10 @@
 import { Model } from '../model/model';
-import { EntityFilter } from './entity-filter';
+import { EntityPieces } from './entity-pieces';
 import { FilterOperator } from './filter-operator';
 
 export type FilterParams<T extends Model = Model> = {
   dir?: '' | 'asc' | 'desc';
-  entities?: EntityFilter<T>[];
+  entities?: EntityPieces<T>[];
   operators?: Record<string, FilterOperator>;
   page?: number;
   search?: string;

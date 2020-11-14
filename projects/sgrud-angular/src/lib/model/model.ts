@@ -1,8 +1,7 @@
 import { BehaviorSubject, Observable, of, OperatorFunction } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { EntityFilter } from '../typing/entity-filter';
 import { EntityGraph } from '../typing/entity-graph';
-import { EntityParts } from '../typing/entity-parts';
+import { EntityPieces } from '../typing/entity-pieces';
 import { EntityType } from '../typing/entity-type';
 import { FilterParams } from '../typing/filter-params';
 import { PageableList } from '../typing/pagable-list';
@@ -62,7 +61,7 @@ export abstract class Model<T extends Model = any> {
   public static findOne<U extends Model = Model>(
     this: EntityType<U>,
     graph: EntityGraph<U>,
-    entity: EntityFilter<U>
+    entity: EntityPieces<U>
   ): Observable<U> {
     return ModelService.instance.findOne(this, graph, entity);
   }
@@ -87,7 +86,7 @@ export abstract class Model<T extends Model = any> {
     this: EntityType<U>,
     item: U,
     shallow: boolean = false
-  ): EntityParts<U> | undefined {
+  ): EntityPieces<U> | undefined {
     return ModelService.instance.serialize(item, shallow);
   }
 
@@ -135,7 +134,7 @@ export abstract class Model<T extends Model = any> {
     return this.__typename;
   }
 
-  public constructor(...parts: EntityParts<T>[]) {
+  public constructor(...parts: EntityPieces<T>[]) {
     Object.defineProperty(this, 'øchanges', {
       value: new BehaviorSubject<T>(this as Model as T)
     });
@@ -145,7 +144,7 @@ export abstract class Model<T extends Model = any> {
 
   public assign<U extends Model = T>(
     this: U,
-    ...parts: EntityParts<U>[]
+    ...parts: EntityPieces<U>[]
   ): Observable<U> {
     for (const part of parts) {
       (function assign(
@@ -171,15 +170,15 @@ export abstract class Model<T extends Model = any> {
   public commit<U extends Model = T>(
     this: U,
     mapper: OperatorFunction<Record<string, any>, U>,
-    mutation: string,
+    query: string,
     variables: Record<string, any> = { }
   ): Observable<U> {
     return ModelService.instance.commit(
-      mutation,
+      query,
       variables
     ).pipe(
       mapper,
-      switchMap((item) => this.assign(item as EntityParts<U>))
+      switchMap((item) => this.assign(item as EntityPieces<U>))
     );
   }
 
@@ -197,7 +196,7 @@ export abstract class Model<T extends Model = any> {
   public find<U extends Model = T>(
     this: U,
     graph: EntityGraph<U>,
-    entity: EntityFilter<U> = this.serialize(true) as EntityFilter<U>
+    entity: EntityPieces<U> = this.serialize(true)!
   ): Observable<U> {
     return ModelService.instance.findOne(
       this.entity,
@@ -218,7 +217,7 @@ export abstract class Model<T extends Model = any> {
 
     return this.assign(...keys.map((key) => ({
       ['ɵ' + key]: undefined
-    })) as EntityParts<U>[]);
+    })) as EntityPieces<U>[]);
   }
 
   public save<U extends Model = T>(
@@ -237,7 +236,7 @@ export abstract class Model<T extends Model = any> {
   public serialize<U extends Model = T>(
     this: U,
     shallow: boolean = false
-  ): EntityParts<U> | undefined {
+  ): EntityPieces<U> | undefined {
     return ModelService.instance.serialize(this, shallow);
   }
 

@@ -5,9 +5,8 @@ import { map, switchMap, take } from 'rxjs/operators';
 import { AuthService } from '../auth/service';
 import { SgrudConfig } from '../sgrud-config';
 import { EntityFields } from '../typing/entity-fields';
-import { EntityFilter } from '../typing/entity-filter';
 import { EntityGraph } from '../typing/entity-graph';
-import { EntityParts } from '../typing/entity-parts';
+import { EntityPieces } from '../typing/entity-pieces';
 import { EntityType } from '../typing/entity-type';
 import { FilterParams } from '../typing/filter-params';
 import { PageableList } from '../typing/pagable-list';
@@ -92,7 +91,7 @@ export class ModelService {
   public findOne<T extends Model>(
     model: EntityType<T>,
     graph: EntityGraph<T>,
-    entity: EntityFilter<T>
+    entity: EntityPieces<T>
   ): Observable<T> {
     return this.commit(`
       query findOne($entity: ${model.type}Input!) {
@@ -137,8 +136,8 @@ export class ModelService {
   public serialize<T extends Model>(
     item: T,
     shallow: boolean
-  ): EntityParts<T> | undefined {
-    const data: EntityParts<T> = { };
+  ): EntityPieces<T> | undefined {
+    const data: EntityPieces<T> = { };
 
     for (const key in Reflect.get(item, 'øfield') as T) {
       if (!typeOf.undefined(item[key])) {

@@ -1,12 +1,12 @@
 import { Model } from '../model/model';
 import { EntityFields } from './entity-fields';
 
-export type EntityFilter<T extends Model = Model> = {
+export type EntityPieces<T extends Model = Model> = {
   [K in EntityFields<T>]?:
     Required<T>[K] extends Model<infer U>[]
-      ? EntityFilter<U> :
+      ? EntityPieces<U>[] :
     Required<T>[K] extends Model<infer V>
-      ? EntityFilter<V> :
+      ? EntityPieces<V> :
     Required<T>[K] extends (...args: any[]) => any
       ? never :
     Required<T>[K];
