@@ -6,7 +6,7 @@ import { EntityPromise } from '../typing/entity-promise';
 import { EntityType } from '../typing/entity-type';
 import { FilterParams } from '../typing/filter-params';
 
-export class Resolver<T extends Model = Model>
+export class Resolver<T extends Model>
   implements EntityPromise<T> {
 
   public readonly entity!: EntityType<T>;

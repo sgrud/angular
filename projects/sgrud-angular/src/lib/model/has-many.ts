@@ -2,7 +2,7 @@ import { EntityType } from '../typing/entity-type';
 import { typeOf } from '../utility/type-of';
 import { Model } from './model';
 
-export function HasMany<T extends Model = Model>(
+export function HasMany<T extends Model>(
   typeFactory: () => EntityType<T>,
   serialize: boolean = true
 ): (
@@ -31,7 +31,9 @@ export function HasMany<T extends Model = Model>(
           return this['ɵ' + field]?.valueOf();
         },
         set(value?: T[]): void {
-          if (typeOf.array(value)) {
+          if (typeOf.null(value)) {
+            this['ɵ' + field] = null;
+          } else if (typeOf.array(value)) {
             const type: EntityType<T> = typeFactory();
             this['ɵ' + field] = value.map((i) => new type(i));
             this.øchanges.next(this);

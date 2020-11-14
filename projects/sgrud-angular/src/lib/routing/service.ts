@@ -124,15 +124,15 @@ export class RoutingService
 
         if (promise.findAll) {
           return promise.entity.findAll(
-            promise.findAll(route.params),
-            promise.graph
+            promise.graph,
+            promise.findAll(route.params)
           ).pipe(map((data) => data.result!));
         }
 
         if (promise.findOne) {
           return promise.entity.findOne(
-            promise.findOne(route.params),
-            promise.graph
+            promise.graph,
+            promise.findOne(route.params)
           );
         }
       }

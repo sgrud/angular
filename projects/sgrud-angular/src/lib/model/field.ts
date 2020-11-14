@@ -14,8 +14,8 @@ export function Field<T extends new(...args: any[]) => InstanceType<T>>(
     field: string
   ) => {
     if (serialize) {
-      Reflect.set(model, 'øfields', {
-        ...Reflect.get(model, 'øfields'),
+      Reflect.set(model, 'øfield', {
+        ...Reflect.get(model, 'øfield'),
         [field]: typeFactory
       });
     }
@@ -30,7 +30,9 @@ export function Field<T extends new(...args: any[]) => InstanceType<T>>(
           return this['ɵ' + field]?.valueOf();
         },
         set(value?: T): void {
-          if (!(typeOf.null(value) || typeOf.undefined(value))) {
+          if (typeOf.null(value)) {
+            this['ɵ' + field] = null;
+          } else if (!typeOf.undefined(value)) {
             const type: new(...args: any[]) => InstanceType<T> = typeFactory();
             this['ɵ' + field] = new type(value);
             this.øchanges.next(this);

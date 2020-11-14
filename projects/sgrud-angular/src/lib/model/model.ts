@@ -1,7 +1,8 @@
 import { BehaviorSubject, Observable, of, OperatorFunction } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { EntityFilter } from '../typing/entity-filter';
 import { EntityGraph } from '../typing/entity-graph';
+import { EntityParts } from '../typing/entity-parts';
 import { EntityType } from '../typing/entity-type';
 import { FilterParams } from '../typing/filter-params';
 import { PageableList } from '../typing/pagable-list';
@@ -12,158 +13,90 @@ import { ModelService } from './service';
 
 export abstract class Model<T extends Model = any> {
 
+  public static get entity(): InstanceType<EntityType> {
+    return new (this as EntityType)();
+  }
+
   public static get mono(): string {
-    return new (this as any as EntityType)().mono;
+    return this.entity.mono;
   }
 
   public static get multi(): string {
-    return new (this as any as EntityType)().multi;
+    return this.entity.multi;
   }
 
   public static get type(): string {
-    return new (this as any as EntityType)().type;
+    return this.entity.type;
   }
 
-  public static deleteAll(...ids: string[]): Observable<any> {
-    return this.dispatch(`
-      mutation deleteAll($ids: [String]!) {
-        delete${this.multi}(ids: $ids)
-      }
-    `, { ids });
-  }
-
-  public static deleteOne(id: string): Observable<any> {
-    return this.dispatch(`
-      mutation deleteOne($id: String!) {
-        delete${this.mono}(id: $id)
-      }
-    `, { id });
-  }
-
-  public static findAll<U extends Model = Model>(
+  public static commit<U extends Model = Model>(
     this: EntityType<U>,
-    params: FilterParams<U>,
-    graph: EntityGraph<U>
-  ): Observable<PageableList<U>>;
-  public static findAll<U extends Model = Model>(
-    this: EntityType<U> & typeof Model,
-    params: FilterParams<U>,
-    graph: EntityGraph<U>
-  ): Observable<PageableList<U>> {
-    return this.dispatch(`
-      query findAll($params: FilterSortPaginate_${this.type}Input!) {
-        get${this.multi}(params: $params) {
-          result ${this.graft(graph)}
-          total
-        }
-      }
-    `, { params }).pipe(map((data) => {
-      const value: PageableList<U> = data[`get${this.multi}`];
-      value.result = value?.result?.map((i) => new this(i));
-      return value;
-    }));
-  }
-
-  public static findOne<U extends Model = Model>(
-    this: EntityType<U>,
-    entity: EntityFilter<U>,
-    graph: EntityGraph<U>
-  ): Observable<U>;
-  public static findOne<U extends Model = Model>(
-    this: EntityType<U> & typeof Model,
-    entity: EntityFilter<U>,
-    graph: EntityGraph<U>
-  ): Observable<U> {
-    return this.dispatch(`
-      query findOne($entity: ${this.type}Input!) {
-        get${this.mono}(entity: $entity) ${this.graft(graph)}
-      }
-    `, { entity }).pipe(map((data) => {
-      const value: U = data[`get${this.mono}`];
-      return new this(value);
-    }));
-  }
-
-  public static saveAll<U extends Model = Model>(
-    this: EntityType<U>,
-    items: U[],
-    graph: EntityGraph<U>
-  ): Observable<U[]>;
-  public static saveAll<U extends Model = Model>(
-    this: EntityType<U> & typeof Model,
-    items: U[],
-    graph: EntityGraph<U>
-  ): Observable<U[]> {
-    return this.dispatch(`
-      mutation saveAll($items: [${this.type}Input]!) {
-        save${this.multi}(entities: $items) ${this.graft(graph)}
-      }
-    `, { items: items.map((i) => i.serialize()) }).pipe(map((data) => {
-      const value: U[] = data[`save${this.multi}`].result;
-      return value.map((i) => new this(i));
-    }));
-  }
-
-  public static saveOne<U extends Model = Model>(
-    this: EntityType<U>,
-    item: U,
-    graph: EntityGraph<U>
-  ): Observable<U>;
-  public static saveOne<U extends Model = Model>(
-    this: EntityType<U> & typeof Model,
-    item: U,
-    graph: EntityGraph<U>
-  ): Observable<U> {
-    return this.dispatch(`
-      mutation saveOne($item: ${this.type}Input!) {
-        save${this.mono}(entity: $item) ${this.graft(graph)}
-      }
-    `, { item: item.serialize() }).pipe(map((data) => {
-      const value: U = data[`save${this.mono}`];
-      return new this(value);
-    }));
-  }
-
-  protected static graft<U extends Model = Model>(
-    graph: EntityGraph<U>
-  ): string {
-    const result: string[] = ['{'];
-
-    for (let n: number = 0; n < graph.length; n++) {
-      if (n > 0) { result.push(' '); }
-
-      if (typeOf.object(graph[n])) {
-        for (const key in graph[n]) {
-          const node: unknown = graph[n][key];
-
-          if (typeOf.array(node) && node.length > 0) {
-            result.push(key, this.graft(node));
-          } else if (typeOf.function(node)) {
-            const { [key]: sub, ...vars } = node();
-            const keys: string[] = Object.keys(vars);
-            result.push(key, '(');
-
-            for (let m: number = 0; m < keys.length; m++) {
-              if (m > 0) { result.push(' '); }
-              result.push(`${keys[m]}:${JSON.stringify(vars[keys[m]])}`);
-            }
-
-            result.push(')', this.graft(sub));
-          }
-        }
-      } else if (typeOf.string(graph[n])) {
-        result.push(graph[n] as string);
-      }
-    }
-
-    return result.concat('}').join('');
-  }
-
-  protected static dispatch(
     query: string,
-    variables?: Record<string, any>
+    variables: Record<string, any> = { }
   ): Observable<any> {
-    return ModelService.instance.dispatch(query, variables);
+    return ModelService.instance.commit(query, variables);
+  }
+
+  public static deleteAll<U extends Model = Model>(
+    this: EntityType<U>,
+    ...ids: string[]
+  ): Observable<any> {
+    return ModelService.instance.deleteAll(this, ...ids);
+  }
+
+  public static deleteOne<U extends Model = Model>(
+    this: EntityType<U>,
+    id: string
+  ): Observable<any> {
+    return ModelService.instance.deleteOne(this, id);
+  }
+
+  public static findAll<U extends Model = Model>(
+    this: EntityType<U>,
+    graph: EntityGraph<U>,
+    params: FilterParams<U>
+  ): Observable<PageableList<U>> {
+    return ModelService.instance.findAll(this, graph, params);
+  }
+
+  public static findOne<U extends Model = Model>(
+    this: EntityType<U>,
+    graph: EntityGraph<U>,
+    entity: EntityFilter<U>
+  ): Observable<U> {
+    return ModelService.instance.findOne(this, graph, entity);
+  }
+
+  public static saveAll<U extends Model = Model>(
+    this: EntityType<U>,
+    graph: EntityGraph<U>,
+    items: U[]
+  ): Observable<U[]> {
+    return ModelService.instance.saveAll(this, graph, items);
+  }
+
+  public static saveOne<U extends Model = Model>(
+    this: EntityType<U>,
+    graph: EntityGraph<U>,
+    item: U
+  ): Observable<U> {
+    return ModelService.instance.saveOne(this, graph, item);
+  }
+
+  public static serialize<U extends Model = Model>(
+    this: EntityType<U>,
+    item: U,
+    shallow: boolean = false
+  ): EntityParts<U> | undefined {
+    return ModelService.instance.serialize(item, shallow);
+  }
+
+  public static treemap<U extends Model = Model>(
+    this: EntityType<U>,
+    item: U,
+    shallow: boolean = false
+  ): EntityGraph<U> | undefined {
+    return ModelService.instance.treemap(item, shallow);
   }
 
   @Field(() => String)
@@ -202,17 +135,17 @@ export abstract class Model<T extends Model = any> {
     return this.__typename;
   }
 
-  public constructor(...parts: Partial<T>[]) {
+  public constructor(...parts: EntityParts<T>[]) {
     Object.defineProperty(this, 'øchanges', {
-      value: new BehaviorSubject<T>(this as any as T)
+      value: new BehaviorSubject<T>(this as Model as T)
     });
 
-    this.assign(...parts as any[]).subscribe();
+    (this as Model as T).assign(...parts).subscribe();
   }
 
-  public assign<U extends Model = Model>(
-    this: U & Record<string, any>,
-    ...parts: Record<string, any>[]
+  public assign<U extends Model = T>(
+    this: U,
+    ...parts: EntityParts<U>[]
   ): Observable<U> {
     for (const part of parts) {
       (function assign(
@@ -232,152 +165,87 @@ export abstract class Model<T extends Model = any> {
     }
 
     this.øchanges.next(this);
-    return of(this as U);
+    return of(this.øchanges.value);
   }
 
-  public delete<U extends Model = Model>(
+  public commit<U extends Model = T>(
+    this: U,
+    mapper: OperatorFunction<Record<string, any>, U>,
+    mutation: string,
+    variables: Record<string, any> = { }
+  ): Observable<U> {
+    return ModelService.instance.commit(
+      mutation,
+      variables
+    ).pipe(
+      mapper,
+      switchMap((item) => this.assign(item as EntityParts<U>))
+    );
+  }
+
+  public delete<U extends Model = T>(
     this: U
   ): Observable<U> {
-    return this.entity.deleteOne(
+    return ModelService.instance.deleteOne(
+      this.entity,
       this.id!
     ).pipe(
       switchMap(() => this.reset())
     );
   }
 
-  public find<U extends Model = Model>(
+  public find<U extends Model = T>(
     this: U,
     graph: EntityGraph<U>,
-    filter: EntityFilter<U> = this.serialize(true) as EntityFilter<U>
+    entity: EntityFilter<U> = this.serialize(true) as EntityFilter<U>
   ): Observable<U> {
-    return this.entity.findOne(
-      filter,
-      graph as EntityGraph
+    return ModelService.instance.findOne(
+      this.entity,
+      graph,
+      entity
     ).pipe(
       switchMap((item) => this.assign(item))
     );
   }
 
-  public mutate<U extends Model = Model>(
-    this: U,
-    mapper: OperatorFunction<Record<string, any>, U>,
-    mutation: string,
-    variables?: any
-  ): Observable<U> {
-    return Model.dispatch(
-      mutation,
-      variables
-    ).pipe(
-      mapper,
-      switchMap((item) => this.assign(item))
-    );
-  }
-
-  public reset<U extends Model = Model>(
+  public reset<U extends Model = T>(
     this: U
   ): Observable<U> {
     const keys: string[] = ['id', 'created', 'modified'];
-    for (const key in Reflect.get(this, 'øfields')) { keys.push(key); }
+    for (const key in Reflect.get(this, 'øfield')) { keys.push(key); }
     for (const key in Reflect.get(this, 'øhasMany')) { keys.push(key); }
     for (const key in Reflect.get(this, 'øhasOne')) { keys.push(key); }
 
     return this.assign(...keys.map((key) => ({
       ['ɵ' + key]: undefined
-    })) as any[]);
+    })) as EntityParts<U>[]);
   }
 
-  public save<U extends Model = Model>(
+  public save<U extends Model = T>(
     this: U,
     graph: EntityGraph<U> = this.treemap()
   ): Observable<U> {
-    return this.entity.saveOne(
-      this,
-      graph as EntityGraph
+    return ModelService.instance.saveOne(
+      this.entity,
+      graph,
+      this
     ).pipe(
       switchMap((item) => this.assign(item))
     );
   }
 
-  public serialize<U extends Model = Model>(
-    shallow?: boolean
-  ): Record<string, any> | undefined;
-  public serialize<U extends Model = Model>(
-    this: U & Record<string, string & U & U[]>,
+  public serialize<U extends Model = T>(
+    this: U,
     shallow: boolean = false
-  ): Record<string, any> | undefined {
-    const data: Record<string, any> = { };
-
-    for (const key in Reflect.get(this, 'øfields')) {
-      if (!typeOf.undefined(this[key])) {
-        data[key] = this.valuate(key);
-      }
-    }
-
-    if (!shallow) {
-      for (const key in Reflect.get(this, 'øhasMany')) {
-        if (typeOf.array(this[key])) {
-          data[key] = this[key].map((item) => item.serialize());
-        }
-      }
-
-      for (const key in Reflect.get(this, 'øhasOne')) {
-        if (typeOf.object(this[key])) {
-          data[key] = this[key].serialize();
-        }
-      }
-    }
-
-    return Object.keys(data).length ? data : undefined;
+  ): EntityParts<U> | undefined {
+    return ModelService.instance.serialize(this, shallow);
   }
 
-  public treemap<U extends Model = Model>(
-    shallow?: boolean
-  ): EntityGraph<U>;
-  public treemap<U extends Model = Model>(
-    this: U & Record<string, string & U & U[]>,
+  public treemap<U extends Model = T>(
+    this: U,
     shallow: boolean = false
   ): EntityGraph<U> {
-    const graph: any[] = [];
-
-    for (const key in Reflect.get(this, 'øfields')) {
-      if (!typeOf.undefined(this[key])) {
-        graph.push(key);
-      }
-    }
-
-    if (!shallow) {
-      for (const key in Reflect.get(this, 'øhasMany')) {
-        if (typeOf.array(this[key]) && this[key].length) {
-          graph.push({ [key]: this[key][0].treemap() });
-        }
-      }
-
-      for (const key in Reflect.get(this, 'øhasOne')) {
-        if (typeOf.object(this[key])) {
-          graph.push({ [key]: this[key].treemap() });
-        }
-      }
-    }
-
-    return graph;
-  }
-
-  public valuate<U extends Model = Model>(
-    field: string
-  ): any;
-  public valuate<U extends Model = Model>(
-    this: U & Record<string, any>,
-    field: string
-  ): any {
-    switch (this['ɵ' + field].constructor) {
-      case Array: return (this['ɵ' + field] as any[]).slice();
-      case Boolean: return (this['ɵ' + field] as boolean).valueOf();
-      case Date: return (this['ɵ' + field] as Date).toISOString();
-      case Number: return (this['ɵ' + field] as number).valueOf();
-      case Object: return (this['ɵ' + field] as object).valueOf();
-      case String: return (this['ɵ' + field] as string).toString();
-      default: return undefined;
-    }
+    return ModelService.instance.treemap(this, shallow);
   }
 
 }
