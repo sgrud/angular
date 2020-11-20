@@ -150,14 +150,14 @@ export class ModelService {
       for (const key in Reflect.get(item, 'øhasMany') as T) {
         if (typeOf.array(item[key])) {
           // @ts-expect-error
-          data[key] = item[key].map((i) => i.serialize(i));
+          data[key] = item[key].map((i) => i.serialize(shallow));
         }
       }
 
       for (const key in Reflect.get(item, 'øhasOne') as T) {
         if (typeOf.object(item[key])) {
           // @ts-expect-error
-          data[key] = item[key].serialize();
+          data[key] = item[key].serialize(shallow);
         }
       }
     }
@@ -182,14 +182,14 @@ export class ModelService {
       for (const key in Reflect.get(item, 'øhasMany') as T) {
         if (typeOf.array(item[key])) {
           // @ts-expect-error
-          graph.push({ [key]: item[key]?.[0]?.treemap() });
+          graph.push({ [key]: item[key]?.[0]?.treemap(shallow) });
         }
       }
 
       for (const key in Reflect.get(item, 'øhasOne') as T) {
         if (typeOf.object(item[key])) {
           // @ts-expect-error
-          graph.push({ [key]: item[key].treemap() });
+          graph.push({ [key]: item[key].treemap(shallow) });
         }
       }
     }
