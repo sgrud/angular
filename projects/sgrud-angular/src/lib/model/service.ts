@@ -139,7 +139,7 @@ export class ModelService {
   ): EntityPieces<T> | undefined {
     const data: EntityPieces<T> = { };
 
-    for (const key in Reflect.get(item, 'øfield') as T) {
+    for (const key in Reflect.get(item, 'øfield') as Partial<T>) {
       if (!typeOf.undefined(item[key])) {
         // @ts-expect-error
         data[key] = this.valuate(item, key);
@@ -147,14 +147,14 @@ export class ModelService {
     }
 
     if (!shallow) {
-      for (const key in Reflect.get(item, 'øhasMany') as T) {
+      for (const key in Reflect.get(item, 'øhasMany') as Partial<T>) {
         if (typeOf.array(item[key])) {
           // @ts-expect-error
           data[key] = item[key].map((i) => i.serialize(shallow));
         }
       }
 
-      for (const key in Reflect.get(item, 'øhasOne') as T) {
+      for (const key in Reflect.get(item, 'øhasOne') as Partial<T>) {
         if (typeOf.object(item[key])) {
           // @ts-expect-error
           data[key] = item[key].serialize(shallow);
@@ -171,7 +171,7 @@ export class ModelService {
   ): EntityGraph<T> {
     const graph: EntityGraph<T> = [];
 
-    for (const key in Reflect.get(item, 'øfield') as T) {
+    for (const key in Reflect.get(item, 'øfield') as Partial<T>) {
       if (!typeOf.undefined(item[key])) {
         // @ts-expect-error
         graph.push(key);
@@ -179,14 +179,14 @@ export class ModelService {
     }
 
     if (!shallow) {
-      for (const key in Reflect.get(item, 'øhasMany') as T) {
+      for (const key in Reflect.get(item, 'øhasMany') as Partial<T>) {
         if (typeOf.array(item[key])) {
           // @ts-expect-error
           graph.push({ [key]: item[key]?.[0]?.treemap(shallow) });
         }
       }
 
-      for (const key in Reflect.get(item, 'øhasOne') as T) {
+      for (const key in Reflect.get(item, 'øhasOne') as Partial<T>) {
         if (typeOf.object(item[key])) {
           // @ts-expect-error
           graph.push({ [key]: item[key].treemap(shallow) });
