@@ -37,12 +37,11 @@ export class ModelService {
     query: string,
     variables: Record<string, any>
   ): Observable<any> {
-    query = query.replace(/\s+/g, ' ');
     return this.authService.tokens.pipe(take(1), map((tokens) => ({
       Authorization: `Bearer ${tokens.access.raw}`
     })), switchMap((headers) => this.httpClient.post<any>(
       this.sgrudConfig.endpoints.graphql.href,
-      { query, variables },
+      { query: query.replace(/(^|\W)\s*/g, '$1'), variables },
       { headers }
     ).pipe(map((response) => response.data))));
   }
@@ -182,7 +181,7 @@ export class ModelService {
       for (const key in Reflect.get(item, 'øhasMany') as Partial<T>) {
         if (typeOf.array(item[key])) {
           // @ts-expect-error
-          graph.push({ [key]: item[key]?.[0]?.treemap(shallow) });
+          graph.push({ [key]: item[key].map((i) => i.treemap(shallow)) });
         }
       }
 
@@ -204,10 +203,11 @@ export class ModelService {
 
     for (let n: number = 0; n < graph.length; n++) {
       if (n > 0) { result.push(' '); }
+      let node: any = graph[n];
 
-      if (typeOf.object(graph[n])) {
-        for (const key in graph[n]) {
-          const node: unknown = graph[n][key];
+      if (typeOf.object(node)) {
+        for (const key in node) {
+          node = node[key];
 
           if (typeOf.array(node) && node.length > 0) {
             result.push(key, this.unravel(node));
@@ -224,8 +224,10 @@ export class ModelService {
             result.push(')', this.unravel(sub));
           }
         }
-      } else if (typeOf.string(graph[n])) {
-        result.push(graph[n] as string);
+      } else if (typeOf.array(node) && node.length > 0) {
+        result.push(this.unravel(node).slice(1, -1));
+      } else if (typeOf.string(node)) {
+        result.push(node);
       }
     }
 
