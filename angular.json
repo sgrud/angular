@@ -11,7 +11,7 @@
       "prefix": "lib",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-ng-packagr:build",
+          "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
             "tsConfig": "projects/sgrud-angular/tsconfig.lib.json",
             "project": "projects/sgrud-angular/ng-package.json"
