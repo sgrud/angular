@@ -8,7 +8,7 @@
     "@angular/common": "11.0.3",
     "@angular/core": "11.0.3",
     "@angular/router": "11.0.3",
-    "@ngx-pwa/local-storage": "11.0.1",
+    "@ngx-pwa/local-storage": "11.0.2",
     "rxjs": "6.6.3",
     "zone.js": "0.10.3"
   }
