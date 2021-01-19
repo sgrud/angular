@@ -241,7 +241,6 @@ export class ModelService {
     const value: any = item['ɵ' + field as EntityFields<T>];
 
     switch (true) {
-      default: return undefined;
       case typeOf.null(value): return null;
       case value.constructor === Array: return (value as any[])?.slice();
       case value.constructor === Boolean: return (value as boolean)?.valueOf();
@@ -250,6 +249,8 @@ export class ModelService {
       case value.constructor === Object: return (value as object)?.valueOf();
       case value.constructor === String: return (value as string)?.toString();
     }
+
+    return undefined;
   }
 
 }
