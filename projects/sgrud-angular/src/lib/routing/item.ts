@@ -1,14 +1,20 @@
 import { Type } from '@angular/core';
-import { Resolve } from '@angular/router';
+import { Data, Resolve } from '@angular/router';
 import { Resolver } from './resolver';
 
 export class RoutingItem {
 
   public readonly children: Type<any>[] = [];
 
+  public readonly data?: Data;
+
+  public readonly guards: Type<any>[] = [];
+
   public readonly hidden: boolean = false;
 
-  public readonly path?: string;
+  public readonly outlet?: string;
+
+  public readonly path: string = '';
 
   public readonly refer?: Type<any>;
 

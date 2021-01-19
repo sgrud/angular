@@ -1,4 +1,4 @@
-import { Injectable, Provider, Type } from '@angular/core';
+import { Injectable, Type, ValueProvider } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Resolve, Route, ROUTES } from '@angular/router';
 import { EMPTY, Observable } from 'rxjs';
 import { map, take } from 'rxjs/operators';
@@ -17,27 +17,26 @@ export class RoutingService
 
   private static readonly øroutingItems: RoutingItem[] = [];
 
-  public static for(target: Type<any>): Provider[] {
+  public static for(target: Type<any>): ValueProvider {
+    const provider: ValueProvider = {
+      multi: true,
+      provide: ROUTES,
+      useValue: []
+    };
+
     for (const routingItem of RoutingService.øroutingItems) {
       if (routingItem.refer === target) {
-        return [
-          {
-            multi: true,
-            provide: ROUTES,
-            useValue: [
-              this.routing(routingItem),
-              {
-                path: '**',
-                pathMatch: 'full',
-                redirectTo: routingItem.path
-              }
-            ]
-          }
-        ];
+        const route: Route = this.routing(routingItem);
+        provider.useValue = route.component ? [route] : route.children!;
+        provider.useValue.push({
+          path: '**',
+          pathMatch: 'full',
+          redirectTo: route.path
+        });
       }
     }
 
-    return [];
+    return provider;
   }
 
   public static register(routingItem: RoutingItem): void {
@@ -48,13 +47,31 @@ export class RoutingService
 
   private static routing(routingItem: RoutingItem): Route {
     const route: Route = {
-      component: routingItem.hidden ? undefined : routingItem.refer,
+      canActivate: routingItem.guards.filter((guard) => {
+        return guard.prototype.hasOwnProperty('canActivate');
+      }),
+      canActivateChild: routingItem.guards.filter((guard) => {
+        return guard.prototype.hasOwnProperty('canActivateChild');
+      }),
+      outlet: routingItem.outlet,
+      data: routingItem.data,
       path: routingItem.path
     };
 
+    if (!routingItem.hidden) {
+      route.component = routingItem.refer;
+    }
+
     if (routingItem.roles?.length) {
-      route.canActivate = [RoutingService];
-      route.canActivateChild = [RoutingService];
+      route.canActivate = [
+        ...route.canActivate!,
+        RoutingService
+      ];
+
+      route.canActivateChild = [
+        ...route.canActivateChild!,
+        RoutingService
+      ];
 
       route.data = {
         ...route.data,

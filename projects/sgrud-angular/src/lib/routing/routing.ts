@@ -14,7 +14,6 @@ export function Routing(
     switch (true) {
       case ɵNG_COMP_DEF in target:
         RoutingService.register(new RoutingItem({
-          path: '',
           refer: target
         }, routingItem));
         break;
