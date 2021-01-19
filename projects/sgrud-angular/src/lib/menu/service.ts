@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { NavigationEnd, Route, Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { filter, map, startWith } from 'rxjs/operators';
 import { typeOf } from '../utility/type-of';
 import { MenuItem } from './item';
@@ -19,15 +19,15 @@ export class MenuService {
     if (!menuItems.includes(menuItem)) {
       for (const leftItem of menuItems) {
         switch (true) {
-          case menuItem.children.includes(leftItem.refer!)
-            && menuItem.refer !== leftItem.parent:
+          case leftItem.parent !== menuItem.refer
+            && menuItem.children.includes(leftItem.refer!):
             menuItems[menuItems.indexOf(leftItem)] = new MenuItem({
               ...leftItem, parent: menuItem.refer
             });
             break;
 
-          case leftItem.children.includes(menuItem.refer!)
-            && leftItem.refer !== menuItem.parent:
+          case leftItem.refer !== menuItem.parent
+            && leftItem.children.includes(menuItem.refer!):
             menuItem = new MenuItem({
               ...menuItem, parent: leftItem.refer
             });
@@ -65,7 +65,7 @@ export class MenuService {
           for (let menuItem of MenuService.ømenuItems) {
             if (
               menuItem.refer === route.routeConfig?.component &&
-              menuItem.route?.endsWith(route.routeConfig?.path!)
+              menuItem.route.join('/').endsWith(route.routeConfig?.path!)
             ) {
               if (!activeItems.includes(menuItem)) {
                 activeItems.push(menuItem);
@@ -89,6 +89,26 @@ export class MenuService {
         });
       })
     );
+  }
+
+  public get listedItems(): Observable<MenuItem[]> {
+    return of((function lister(menuItem: MenuItem): MenuItem[] {
+      const listed: MenuItem[] = [menuItem];
+
+      for (const child of menuItem.children) {
+        for (const leftItem of MenuService.ømenuItems) {
+          if (leftItem.refer === child) {
+            listed.push(...lister(leftItem));
+          }
+        }
+      }
+
+      return listed;
+    }(MenuService.ømenuItems.reduce((left, right) => {
+        return left.compare(right);
+    }))).filter((menuItem) => {
+      return !menuItem.hidden;
+    }));
   }
 
   public get parsedItems(): Observable<MenuItem[]> {
@@ -121,36 +141,19 @@ export class MenuService {
     const menuItems: MenuItem[] = MenuService.ømenuItems;
 
     for (const menuItem of menuItems) {
-      if (!menuItem.route?.startsWith('/')) {
-        (function routing(routes: Route[], path: string[]): boolean {
-          for (const route of routes) {
-            switch (true) {
-              case route.component === menuItem.refer:
-                path.push((menuItem.route || route.path)!);
-                menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
-                  ...menuItem, route: path.join('/')
-                });
-                return true;
+      if (!menuItem.route.length) {
+        const route: any[] = this.routing(menuItem);
 
-              case route.children && routing(
-                route.children,
-                path.concat(route.path!)
-              ): return true;
-
-              case route.loadChildren && routing(
-                (route as any)._loadedConfig?.routes || [],
-                path.concat(route.path!)
-              ): return true;
-            }
-          }
-
-          return false;
-        })(this.router.config, ['/']);
+        if (route.length) {
+          menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
+            ...menuItem, route: this.routing(menuItem)
+          });
+        }
       }
     }
 
     loop: for (const menuItem of menuItems) {
-      if (typeOf.undefined(menuItem.route) && menuItem.children.length) {
+      if (!menuItem.route.length && menuItem.children.length) {
         for (const child of menuItem.children) {
           for (const leftItem of menuItems) {
             if (leftItem.route && leftItem.refer === child) {
@@ -164,6 +167,59 @@ export class MenuService {
         }
       }
     }
+  }
+
+  private routing(
+    menuItem: MenuItem,
+    path: any[] = ['/'],
+    routes: Route[] = this.router.config
+  ): any[] {
+    let result: any[] = [];
+
+    for (const route of routes) {
+      switch (true) {
+        case route.component === menuItem.refer:
+          result = this.treemap(path, route);
+          break;
+
+        case typeOf.array(routes = route.children!):
+        case typeOf.array(routes = (route as any)._loadedConfig?.routes):
+          result = this.routing(menuItem, this.treemap(path, route), routes);
+          break;
+      }
+
+      if (result.length) {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  private treemap(path: any[], route: Route): any[] {
+    if (route.path) {
+      path = path.slice();
+      const last: any = path[path.length - 1];
+      const next: object | string = route.outlet
+        ? { [route.outlet]: [route.path] }
+        : route.path;
+
+      switch (true) {
+          case typeOf.object(last) && typeOf.object(next):
+            last.outlets = { ...last.outlets, ...(next as object) };
+            break;
+
+          case typeOf.object(last) && typeOf.string(next):
+            last.outlets[Object.keys(last.outlets).pop()!].push(next);
+            break;
+
+          case typeOf.string(last) || typeOf.undefined(last):
+            path.push(typeOf.object(next) ? { outlets: next } : next);
+            break;
+      }
+    }
+
+    return path;
   }
 
 }
