@@ -27,6 +27,8 @@ export * from './lib/typing/entity-pieces';
 export * from './lib/typing/entity-promise';
 export * from './lib/typing/entity-query';
 export * from './lib/typing/entity-type';
+export * from './lib/typing/filter-conjunction';
+export * from './lib/typing/filter-expression';
 export * from './lib/typing/filter-operator';
 export * from './lib/typing/filter-params';
 export * from './lib/typing/pagable-list';
