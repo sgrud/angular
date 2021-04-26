@@ -1,4 +1,5 @@
 import { Model } from '../model/model';
+import { EntityPaths } from './entity-paths';
 import { FilterConjunction } from './filter-conjunction';
 import { FilterOperator } from './filter-operator';
 
@@ -9,7 +10,7 @@ export type FilterExpression<T extends Model = Model> = {
   };
   entity?: {
     operator?: FilterOperator;
-    path: string;
-    value: string;
+    path: EntityPaths<T>;
+    value: any;
   };
 };

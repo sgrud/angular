@@ -4,11 +4,11 @@ import { EntityQuery } from './entity-query';
 
 export type EntityGraph<T extends Model = Model> = {
   [K in EntityFields<T>]?:
-    Required<T>[K] extends Model<infer U>[]
-      ? Record<K, EntityGraph<U> | EntityQuery<K, U>> :
-    Required<T>[K] extends Model<infer V>
-      ? Record<K, EntityGraph<V> | EntityQuery<K, V>> :
     Required<T>[K] extends (...args: any[]) => any
       ? never :
+    Required<T>[K] extends Model<infer X>[]
+      ? Record<K, EntityGraph<X> | EntityQuery<K, X>> :
+    Required<T>[K] extends Model<infer Y>
+      ? Record<K, EntityGraph<Y> | EntityQuery<K, Y>> :
     K;
 }[EntityFields<T>][];
