@@ -173,7 +173,7 @@ export abstract class Model<T extends Model = any> {
     query: string,
     variables: Record<string, any> = { }
   ): Observable<U> {
-    return ModelService.instance.commit(
+    return this.entity.commit<U>(
       query,
       variables
     ).pipe(
@@ -185,8 +185,7 @@ export abstract class Model<T extends Model = any> {
   public delete<U extends Model = T>(
     this: U
   ): Observable<U> {
-    return ModelService.instance.deleteOne(
-      this.entity,
+    return this.entity.deleteOne<U>(
       this.id!
     ).pipe(
       switchMap(() => this.reset())
@@ -198,12 +197,11 @@ export abstract class Model<T extends Model = any> {
     graph: EntityGraph<U>,
     entity: EntityPieces<U> = this.serialize(true)!
   ): Observable<U> {
-    return ModelService.instance.findOne(
-      this.entity,
+    return this.entity.findOne<U>(
       graph,
       entity
     ).pipe(
-      switchMap((item) => this.assign(item))
+      switchMap((item) => this.assign(item as EntityPieces<U>))
     );
   }
 
@@ -222,14 +220,13 @@ export abstract class Model<T extends Model = any> {
 
   public save<U extends Model = T>(
     this: U,
-    graph: EntityGraph<U> = this.treemap()
+    graph: EntityGraph<U> = this.treemap()!
   ): Observable<U> {
-    return ModelService.instance.saveOne(
-      this.entity,
+    return this.entity.saveOne<U>(
       graph,
       this
     ).pipe(
-      switchMap((item) => this.assign(item))
+      switchMap((item) => this.assign(item as EntityPieces<U>))
     );
   }
 
@@ -237,14 +234,14 @@ export abstract class Model<T extends Model = any> {
     this: U,
     shallow: boolean = false
   ): EntityPieces<U> | undefined {
-    return ModelService.instance.serialize(this, shallow);
+    return this.entity.serialize<U>(this, shallow);
   }
 
   public treemap<U extends Model = T>(
     this: U,
     shallow: boolean = false
-  ): EntityGraph<U> {
-    return ModelService.instance.treemap(this, shallow);
+  ): EntityGraph<U> | undefined {
+    return this.entity.treemap<U>(this, shallow);
   }
 
 }

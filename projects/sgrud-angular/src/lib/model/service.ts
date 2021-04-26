@@ -10,6 +10,7 @@ import { EntityPieces } from '../typing/entity-pieces';
 import { EntityType } from '../typing/entity-type';
 import { FilterParams } from '../typing/filter-params';
 import { PageableList } from '../typing/pagable-list';
+import { Enumerator } from '../utility/enumerate';
 import { typeOf } from '../utility/type-of';
 import { Model } from './model';
 
@@ -217,8 +218,15 @@ export class ModelService {
             result.push(key, '(');
 
             for (let m: number = 0; m < keys.length; m++) {
-              if (m > 0) { result.push(' '); }
-              result.push(`${keys[m]}:${JSON.stringify(vars[keys[m]])}`);
+              if (typeOf.undefined(vars[keys[m]])) {
+                keys.splice(m--, 1);
+              } else {
+                const value = vars[keys[m]] instanceof Enumerator
+                  ? vars[keys[m]] : JSON.stringify(vars[keys[m]]);
+
+                if (m > 0) { result.push(' '); }
+                result.push(`${keys[m]}:${value}`);
+              }
             }
 
             result.push(')', this.unravel(sub));
