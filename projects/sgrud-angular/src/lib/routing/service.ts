@@ -131,6 +131,30 @@ export class RoutingService
     return this.guard(route);
   }
 
+  public lookup(target: Type<any>): string[][] {
+    const paths: string[][] = [];
+
+    for (const routingItem of RoutingService.øroutingItems) {
+      if (routingItem.refer === target) {
+        for (const leftItem of RoutingService.øroutingItems) {
+          for (const child of leftItem.children) {
+            if (routingItem.refer === child) {
+              if (leftItem.path) {
+                for (const leftPaths of this.lookup(leftItem.refer!)) {
+                  paths.push(leftPaths.concat(routingItem.path.split('/')));
+                }
+              } else {
+                paths.push(routingItem.path.split('/'));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return paths;
+  }
+
   public resolve(
     route: ActivatedRouteSnapshot & { resolved: Record<string, true> }
   ): Observable<Model | Model[]> {
