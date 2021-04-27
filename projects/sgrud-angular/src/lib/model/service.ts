@@ -139,10 +139,14 @@ export class ModelService {
   ): EntityPieces<T> | undefined {
     const data: EntityPieces<T> = { };
 
-    for (const key in Reflect.get(item, 'øfield') as Partial<T>) {
-      if (!typeOf.undefined(item[key])) {
-        // @ts-expect-error
-        data[key] = this.valuate(item, key);
+    if (shallow && item.id) {
+      data.id = this.valuate(item, 'id' as EntityFields<T>);
+    } else {
+      for (const key in Reflect.get(item, 'øfield') as Partial<T>) {
+        if (!typeOf.undefined(item[key])) {
+          // @ts-expect-error
+          data[key] = this.valuate(item, key);
+        }
       }
     }
 
