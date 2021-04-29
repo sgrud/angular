@@ -141,14 +141,12 @@ export class MenuService {
     const menuItems: MenuItem[] = MenuService.ømenuItems;
 
     for (const menuItem of menuItems) {
-      if (!menuItem.route.length) {
-        const route: any[] = this.routing(menuItem);
+      const route: any[] = this.routing(menuItem);
 
-        if (route.length) {
-          menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
-            ...menuItem, route: this.routing(menuItem)
-          });
-        }
+      if (route.length) {
+        menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
+          ...menuItem, route
+        });
       }
     }
 
@@ -188,7 +186,10 @@ export class MenuService {
           break;
       }
 
-      if (result.length) {
+      if (result.length && (
+        !menuItem.route.length ||
+        result.join('/').endsWith(menuItem.route.join('/'))
+      )) {
         break;
       }
     }
