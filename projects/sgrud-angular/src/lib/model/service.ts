@@ -75,7 +75,7 @@ export class ModelService {
     params: FilterParams<T>
   ): Observable<PageableList<T>> {
     return this.commit(`
-      query findAll($params: FilterSortPaginate_${model.type}Input!) {
+      query findAll($params: FilterSortPaginateInput!) {
         get${model.multi}(params: $params) {
           result ${this.unravel(graph)}
           total
