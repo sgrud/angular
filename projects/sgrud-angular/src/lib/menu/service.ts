@@ -154,7 +154,7 @@ export class MenuService {
       if (!menuItem.route.length && menuItem.children.length) {
         for (const child of menuItem.children) {
           for (const leftItem of menuItems) {
-            if (leftItem.route && leftItem.refer === child) {
+            if (leftItem.refer === child && leftItem.route) {
               menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
                 ...menuItem, route: leftItem.route
               });
