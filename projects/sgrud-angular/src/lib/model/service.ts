@@ -8,6 +8,7 @@ import { EntityFields } from '../typing/entity-fields';
 import { EntityGraph } from '../typing/entity-graph';
 import { EntityPieces } from '../typing/entity-pieces';
 import { EntityType } from '../typing/entity-type';
+import { FilterExpression } from '../typing/filter-expression';
 import { FilterParams } from '../typing/filter-params';
 import { PageableList } from '../typing/pagable-list';
 import { Enumerator } from '../utility/enumerate';
@@ -81,7 +82,7 @@ export class ModelService {
           total
         }
       }
-    `, { params }).pipe(map((data) => {
+    `, { params: this.strip(params) }).pipe(map((data) => {
       const value: PageableList<T> = data[`get${model.multi}`];
       value.result = value?.result?.map((i) => new model(i));
       return value;
@@ -167,6 +168,36 @@ export class ModelService {
     }
 
     return Object.keys(data).length ? data : undefined;
+  }
+
+  public strip<T extends Model>(
+    params: FilterParams<T>
+  ): FilterParams<T> {
+    const { expression, search } = params;
+
+    if (search || !(
+      expression?.entity || expression?.conjunction?.operands.length
+    )) {
+      delete params.expression;
+    } else {
+      params.expression = (function strip(
+        exp: FilterExpression<T>
+      ): FilterExpression<T> {
+        if (exp.entity) {
+          return { entity: exp.entity };
+        } else if (!exp.conjunction?.operands.length) {
+          return undefined!;
+        }
+
+        for (let i = 0; i < exp.conjunction!.operands.length; i++) {
+          exp.conjunction!.operands[i] = strip(exp.conjunction!.operands[i]);
+        }
+
+        return exp;
+      })(expression);
+    }
+
+    return params;
   }
 
   public treemap<T extends Model>(
