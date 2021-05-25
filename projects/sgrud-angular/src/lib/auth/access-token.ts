@@ -29,6 +29,10 @@ export class AccessToken {
   public readonly scopes: string[] = ['access'];
   public readonly sub: string = '';
 
+  public get valid(): boolean {
+    return this.exp - 60 > Date.now() / 1000;
+  }
+
   public constructor(...parts: Partial<AccessToken>[]) {
     Object.assign(this, ...parts);
   }

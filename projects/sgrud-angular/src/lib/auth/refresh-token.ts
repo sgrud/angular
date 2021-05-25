@@ -23,6 +23,10 @@ export class RefreshToken {
   public readonly scopes: string[] = ['refresh'];
   public readonly sub: string = '';
 
+  public get valid(): boolean {
+    return this.exp - 60 > Date.now() / 1000;
+  }
+
   public constructor(...parts: Partial<RefreshToken>[]) {
     Object.assign(this, ...parts);
   }
