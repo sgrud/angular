@@ -53,8 +53,11 @@ export class RoutingService
       canActivateChild: routingItem.guards.filter((guard) => {
         return guard.prototype.hasOwnProperty('canActivateChild');
       }),
+      data: {
+        refer: routingItem.refer,
+        ...routingItem.data
+      },
       outlet: routingItem.outlet,
-      data: routingItem.data,
       path: routingItem.path
     };
 

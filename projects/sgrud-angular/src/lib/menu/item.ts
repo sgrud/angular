@@ -14,6 +14,8 @@ export class MenuItem {
 
   public readonly refer?: Type<any>;
 
+  public readonly roles?: string[];
+
   public readonly route: any[] = [];
 
   public constructor(...parts: Partial<MenuItem>[]) {

@@ -17,11 +17,13 @@ export class MenuService {
     const menuItems: MenuItem[] = MenuService.ømenuItems;
 
     if (!menuItems.includes(menuItem)) {
-      for (const leftItem of menuItems) {
+      for (let i = 0; i < menuItems.length; i++) {
+        const leftItem: MenuItem = menuItems[i];
+
         switch (true) {
           case leftItem.parent !== menuItem.refer
             && menuItem.children.includes(leftItem.refer!):
-            menuItems[menuItems.indexOf(leftItem)] = new MenuItem({
+            menuItems[i] = new MenuItem({
               ...leftItem, parent: menuItem.refer
             });
             break;
@@ -42,7 +44,7 @@ export class MenuService {
 
           case leftItem.refer === menuItem.parent
             && !leftItem.children.includes(menuItem.refer!):
-            menuItems[menuItems.indexOf(leftItem)] = new MenuItem({
+            menuItems[i] = new MenuItem({
               ...leftItem, children: leftItem.children.concat(menuItem.refer!)
             });
             break;
@@ -140,23 +142,30 @@ export class MenuService {
   ) {
     const menuItems: MenuItem[] = MenuService.ømenuItems;
 
-    for (const menuItem of menuItems) {
-      const route: any[] = this.routing(menuItem);
+    for (let i = 0; i < menuItems.length; i++) {
+      const roles: string[] = this.roles(menuItems[i]);
+      const route: any[] = this.routing(menuItems[i]);
+
+      if (roles.length) {
+        menuItems[i] = new MenuItem({
+          ...menuItems[i], roles: [...roles]
+        });
+      }
 
       if (route.length) {
-        menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
-          ...menuItem, route
+        menuItems[i] = new MenuItem({
+          ...menuItems[i], route
         });
       }
     }
 
-    loop: for (const menuItem of menuItems) {
-      if (!menuItem.route.length && menuItem.children.length) {
-        for (const child of menuItem.children) {
+    loop: for (let i = 0; i < menuItems.length; i++) {
+      if (!menuItems[i].route.length && menuItems[i].children.length) {
+        for (const child of menuItems[i].children) {
           for (const leftItem of menuItems) {
             if (leftItem.refer === child && leftItem.route) {
-              menuItems[menuItems.indexOf(menuItem)] = new MenuItem({
-                ...menuItem, route: leftItem.route
+              menuItems[i] = new MenuItem({
+                ...menuItems[i], route: leftItem.route
               });
 
               continue loop;
@@ -165,6 +174,35 @@ export class MenuService {
         }
       }
     }
+  }
+
+  private roles(
+    menuItem: MenuItem,
+    path: any[] = ['/'],
+    routes: Route[] = this.router.config
+  ): string[] {
+    let result: string[] = [];
+
+    for (const route of routes) {
+      switch (true) {
+        case route.data?.refer === menuItem.refer && (!menuItem.route.length ||
+          this.treemap(path, route).join('/').endsWith(menuItem.route.join('/'))
+        ):
+          result = route.data?.roles;
+          break;
+
+        case typeOf.array(routes = route.children!):
+        case typeOf.array(routes = (route as any)._loadedConfig?.routes):
+          result = this.roles(menuItem, this.treemap(path, route), routes);
+          break;
+      }
+
+      if (result.length) {
+        break;
+      }
+    }
+
+    return result;
   }
 
   private routing(
