@@ -21,26 +21,6 @@
               "tsConfig": "projects/sgrud-angular/tsconfig.lib.prod.json"
             }
           }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "projects/sgrud-angular/src/test.ts",
-            "tsConfig": "projects/sgrud-angular/tsconfig.spec.json",
-            "karmaConfig": "projects/sgrud-angular/karma.conf.js"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": [
-              "projects/sgrud-angular/tsconfig.lib.json",
-              "projects/sgrud-angular/tsconfig.spec.json"
-            ],
-            "exclude": [
-              "**/node_modules/**"
-            ]
-          }
         }
       }
     }

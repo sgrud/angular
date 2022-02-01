@@ -3,9 +3,6 @@
   "references": [
     {
       "path": "./projects/sgrud-angular/tsconfig.lib.json"
-    },
-    {
-      "path": "./projects/sgrud-angular/tsconfig.spec.json"
     }
   ]
 }
